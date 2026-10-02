@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Doorly"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#10242b">
+<meta name="description" content="Simple offline logger for event attendance and area in/out."><title>Doorly</title>
+<script src="config.js"></script>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--ac:#10242b;--on:#fff;--bg:#e9eeef;--pn:#fff;--ink:#10242b;--mu:#556870;--ln:#c5d1d4;--in:#0f7a4a;--out:#a8500a;--att:#1d5f8a;--er:#b3261e;--r:8px}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;touch-action:manipulation;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);background:var(--bg);color:var(--ink);font:18px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,h2,h3{margin:0;font-weight:700}h2{font-size:26px;margin-bottom:12px}h3{font-size:19px;margin:18px 0 6px}
+header{background:var(--ac);color:var(--on);display:flex;align-items:center;gap:16px;padding:8px 20px;flex-wrap:wrap}
+header h1{font-size:26px}
+nav{display:flex;gap:4px;margin-left:auto}
+nav button{min-height:44px;background:none;border:0;color:var(--on);font:600 17px system-ui,sans-serif;padding:0 16px;border-radius:var(--r);cursor:pointer}
+nav button[aria-selected=true]{background:#fff;color:var(--ink)}
+main{max-width:900px;margin:0 auto;padding:20px}
+.card{background:var(--pn);border:1px solid var(--ln);border-radius:var(--r);padding:20px;margin-bottom:20px}
+label{display:block;font-weight:600;font-size:15px;margin-bottom:4px}
+input,select{font:inherit;width:100%;min-height:48px;padding:8px 12px;border:1.5px solid var(--ln);border-radius:var(--r);background:#fff;color:var(--ink)}
+input[type=color]{padding:2px;min-width:64px}
+:focus-visible{outline:3px solid #8f7126;outline-offset:2px}
+.btn{font:600 17px system-ui,sans-serif;min-height:48px;padding:0 20px;border:2px solid var(--ac);border-radius:var(--r);background:var(--ac);color:var(--on);cursor:pointer}
+.btn.ghost{background:#fff;color:var(--ink);border-color:var(--ink)}.btn.bad{background:var(--er);border-color:var(--er);color:#fff}
+.link{background:none;border:0;color:var(--er);cursor:pointer;font:inherit;text-decoration:underline;padding:8px;min-height:40px}.link.n{color:var(--ink)}
+.hint{color:var(--mu);font-size:15px;margin:6px 0}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-bottom:12px}.row>*{flex:1 1 170px}.row>.btn{flex:0 0 auto}
+.seg{display:flex;gap:8px;margin-bottom:12px}.seg .btn{flex:1}
+#idIn{font:700 40px system-ui,sans-serif;letter-spacing:.06em;min-height:70px;text-align:center}
+.sug{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.sg{display:flex;justify-content:space-between;gap:8px;min-height:48px;align-items:center;padding:6px 14px;border:1.5px solid var(--ln);border-radius:var(--r);background:#fff;font:inherit;color:var(--ink);cursor:pointer;text-align:left}.sg span{color:var(--mu);font-size:15px}
+.res{margin-top:16px;border-radius:var(--r);padding:24px;min-height:240px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:var(--pn);border:2px dashed var(--ln)}
+.res h2{font-size:32px;margin:0}.res .mark{font:700 76px/1 system-ui,sans-serif}
+.res .nm{font-size:38px;font-weight:700;line-height:1.1;margin-top:8px}.res .meta{font-size:18px;margin-top:6px}
+.res.in,.res.out,.res.att,.res.err,.res.dup{color:#fff;border:2px solid transparent}
+.res.in{background:var(--in)}.res.out{background:var(--out)}.res.att{background:var(--att)}.res.err{background:var(--er)}.res.dup{background:#3b4f57}
+.res .btn{margin-top:16px;background:rgba(255,255,255,.18);border-color:#fff;color:#fff}
+.strip{color:var(--mu);margin-top:12px;font-size:16px}
+.tag{font-size:13px;font-weight:600;padding:1px 9px;border-radius:99px;border:1px solid var(--ln);color:var(--mu)}
+ul.pl{list-style:none;margin:0;padding:0}ul.pl li{padding:6px 0;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sc{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:16px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--ln);white-space:nowrap}th{background:#f3f6f7;color:var(--mu);font-weight:600}
+.di{color:var(--in);font-weight:700}.do{color:var(--out);font-weight:700}
+summary{cursor:pointer;font-weight:600;min-height:44px;display:flex;align-items:center}
+dialog{border:0;border-radius:var(--r);padding:24px;width:min(380px,92vw)}dialog::backdrop{background:rgba(16,36,43,.6)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:12px;background:var(--ink);color:#fff;padding:10px 8px 10px 14px;border-radius:14px;box-shadow:0 12px 32px rgba(0,0,0,.3);max-width:min(460px,92vw)}
+#toast.err{background:var(--er)}#toast .tx{flex:1;font-size:16px;line-height:1.3}
+#toast button{background:none;border:0;color:#fff;font:600 16px system-ui,sans-serif;cursor:pointer;min-height:44px;padding:0 12px;text-decoration:underline}
+@media(max-width:700px){body{font-size:17px}header{padding:8px 12px;gap:8px}header h1{font-size:22px}nav{width:100%;order:3;margin:0}nav button{flex:1 1 0;padding:0 2px;font-size:15px}main{padding:12px}.card{padding:14px}#idIn{font-size:30px;min-height:62px}.res{min-height:200px;padding:16px}.res .mark{font-size:56px}.res .nm{font-size:28px}.res h2{font-size:26px}}
+</style>
+</head>
+<body>
+<noscript><p style="padding:20px">Doorly needs JavaScript. Please turn it on in your browser.</p></noscript>
+<header>
+  <h1><img id="logo" src="icon.svg" alt="" width="28" height="28" style="vertical-align:-6px;margin-right:8px"><span id="appn">Doorly</span></h1>
+  <nav role="tablist" aria-label="Sections" id="nav">
+    <button role="tab" data-t="log" aria-selected="true">Log</button>
+    <button role="tab" data-t="now" aria-selected="false">Now</button>
+    <button role="tab" data-t="recs" aria-selected="false">Records</button>
+    <button role="tab" data-t="setup" aria-selected="false">Setup</button>
+  </nav>
+</header>
+
+<main>
+<!-- LOG -->
+<section id="log" data-tab>
+  <div class="seg" role="group" aria-label="What are you logging?">
+    <button class="btn" type="button" data-m="event">Event attendance</button>
+    <button class="btn ghost" type="button" data-m="area">Area in / out</button>
+  </div>
+  <div class="row"><div><label for="pl" id="pll">Event</label><select id="pl"></select></div><button class="btn ghost" id="newP" type="button">+ New</button></div>
+  <form id="gf" autocomplete="off">
+    <label for="idIn">Type an ID or name, then press Enter</label>
+    <input id="idIn" autofocus autocapitalize="off" autocomplete="off" enterkeyhint="go" spellcheck="false">
+  </form>
+  <div class="sug" id="sug"></div>
+  <div id="camW" hidden><video id="cam" playsinline muted style="width:100%;max-height:260px;border-radius:8px;background:#000;margin-top:10px"></video></div>
+  <div class="res" id="res" role="status" aria-live="polite"></div>
+  <p><button class="btn ghost" id="camBtn" type="button" hidden>Scan with camera</button></p>
+  <div class="strip"><b id="cnt"></b></div>
+  <h3>Recent</h3><ul class="pl" id="rec"></ul>
+</section>
+
+<!-- NOW -->
+<section id="now" data-tab hidden class="card">
+  <h2>Inside now</h2><div id="nowA"></div>
+  <h2 style="margin-top:28px">Event attendance today</h2><div id="nowE"></div>
+</section>
+
+<!-- RECORDS -->
+<section id="recs" data-tab hidden class="card">
+  <h2>Records</h2>
+  <div class="row"><div><label for="rd">Date (clear it to see every day)</label><input type="date" id="rd"></div><div><label for="rp">Event or area</label><select id="rp"></select></div><div><label for="rq">Name or ID</label><input id="rq"></div><button class="btn ghost" id="rcsv" type="button">Download CSV</button></div>
+  <p class="hint" id="rsum"></p>
+  <div class="sc"><table><thead id="rh"></thead><tbody id="rb"></tbody></table></div>
+</section>
+
+<!-- SETUP -->
+<section id="setup" data-tab hidden>
+  <div class="card">
+    <h2>Setup</h2>
+    <div class="row"><div><label for="sa">App name</label><input id="sa" maxlength="40"></div><div style="flex:0 0 90px"><label for="sc">Colour</label><input id="sc" type="color"></div></div>
+    <h3>Events</h3><ul class="pl" id="evL"></ul>
+    <form class="row" id="evF" autocomplete="off"><input id="evN" placeholder="New event name" aria-label="New event name" maxlength="60"><button class="btn" type="submit">Add event</button></form>
+    <h3>Areas</h3><ul class="pl" id="arL"></ul>
+    <form class="row" id="arF" autocomplete="off"><input id="arN" placeholder="New area name" aria-label="New area name" maxlength="60"><button class="btn" type="submit">Add area</button></form>
+    <p class="hint">Removing an event or area keeps its past records.</p>
+  </div>
+
+  <div class="card">
+    <h2>People <span class="tag" id="pc"></span></h2>
+    <p class="hint">Optional. With a list, typing a few letters of a name gives suggestions and IDs show the right name. Without one, whatever is typed is logged as the name.</p>
+    <form id="pf" class="row" autocomplete="off"><div><label for="pi">ID</label><input id="pi" required></div><div><label for="pn">Full name</label><input id="pn" required></div><div><label for="pg">Group (optional)</label><input id="pg"></div><button class="btn" type="submit">Save person</button></form>
+    <div class="row"><div><label for="csv">Import a CSV (columns: id, name, group)</label><input type="file" id="csv" accept=".csv,text/csv"></div></div>
+    <p class="hint" id="im" role="status"></p>
+    <details><summary>Show people list</summary>
+      <div class="row"><div><label for="ps">Search</label><input id="ps"></div></div>
+      <div class="sc"><table><thead><tr><th>ID</th><th>Name</th><th>Group</th><th></th></tr></thead><tbody id="pb"></tbody></table></div>
+    </details>
+  </div>
+
+  <div class="card">
+    <h2>Backup</h2>
+    <p class="hint">Data stays on this device only. Download a backup often. Clearing browser data deletes records.</p>
+    <div class="row"><button class="btn ghost" id="bk" type="button">Download backup</button></div>
+    <div class="row"><div><label for="rs">Restore a backup (replaces everything)</label><input type="file" id="rs" accept=".json,application/json"></div><div><label for="mgf">Add another device's backup (deletes nothing)</label><input type="file" id="mgf" accept=".json,application/json"></div></div>
+    <div class="row"><button class="btn ghost" id="inst" type="button" hidden>Install app</button><button class="btn bad" id="wipe" type="button">Erase all entries and people</button></div>
+    <p class="hint">Doorly v2</p>
+  </div>
+</section>
+</main>
+
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<dialog id="cd"><form method="dialog"><h2 id="ct"></h2><p id="cm"></p><div class="row"><button class="btn" id="cok" value="ok">OK</button><button class="btn ghost" id="cno" value="cancel">Cancel</button></div></form></dialog>
+<dialog id="nd"><form id="nf" autocomplete="off"><h2 id="nt">New event</h2><label for="nn" class="vh">Name</label><input id="nn" required maxlength="60"><div class="row" style="margin-top:12px"><button class="btn" type="submit">Add</button><button class="btn ghost" type="button" id="nc">Cancel</button></div></form></dialog>
+
+<script>
+const $=i=>document.getElementById(i);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).trim().toUpperCase();
+const two=n=>String(n).padStart(2,'0');
+const hm=t=>new Date(t).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const dk=t=>{const d=new Date(t);return d.getFullYear()+'-'+two(d.getMonth()+1)+'-'+two(d.getDate())};
+const h24=t=>{const d=new Date(t);return two(d.getHours())+':'+two(d.getMinutes())};
+const tm=t=>dk(t)===dk(Date.now())?hm(t):dk(t)+' '+hm(t);
+
+/* ---------- data: everything lives in one localStorage record ---------- */
+const CFG=window.DOORLY_CONFIG||{},K='doorly2';
+let D={app:CFG.app||'Doorly',accent:CFG.accent||'#10242b',events:[],areas:[],people:{},logs:[],mode:'event',sel:{event:'',area:''},seeded:0};
+try{Object.assign(D,JSON.parse(localStorage.getItem(K)||'{}'))}catch(e){}
+if(!D.seeded){D.events=[...(CFG.events||[])];D.areas=[...(CFG.areas||[])];D.seeded=1}
+D.sel=D.sel||{event:'',area:''};
+const LIST=k=>k==='event'?D.events:D.areas;
+const fixSel=()=>['event','area'].forEach(k=>{if(!LIST(k).includes(D.sel[k]))D.sel[k]=LIST(k)[0]||''});
+fixSel();
+let warned=0;
+function save(){try{localStorage.setItem(K,JSON.stringify(D));return true}catch(e){if(!warned++)toast('Could not save. Storage is full or blocked. Download a backup now.',null,null,'err');return false}}
+const cur=()=>D.sel[D.mode];
+const LBL={IN:'In',OUT:'Out',ATT:'Attended'},KIND={event:'Event',area:'Area'};
+
+/* ---------- feedback ---------- */
+function beep(f,n=1){try{navigator.vibrate&&navigator.vibrate(n>1?[90,60,90]:50)}catch(e){}try{const a=beep.a||(beep.a=new AudioContext());for(let i=0;i<n;i++){const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+i*.2;o.frequency.value=f;g.gain.value=.08;o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+.13)}}catch(e){}}
+function ask(title,msg,ok='OK',danger=false){return new Promise(res=>{const d=$('cd'),b=$('cok');$('ct').textContent=title;$('cm').textContent=msg;b.textContent=ok;b.classList.toggle('bad',danger);d.returnValue='';d.onclose=()=>res(d.returnValue==='ok');d.showModal();$('cno').focus()})}
+let tt;
+function toast(msg,action,fn,kind,ms=6000){const t=$('toast');clearTimeout(tt);t.className=kind||'';
+  t.innerHTML=`<span class="tx">${esc(msg)}</span>${action?'<button id="tact" type="button">'+esc(action)+'</button>':''}<button id="tclose" type="button" aria-label="Dismiss">×</button>`;
+  t.hidden=false;const hide=()=>{clearTimeout(tt);t.hidden=true};$('tclose').onclick=hide;if(action)$('tact').onclick=()=>{hide();fn()};tt=setTimeout(hide,ms)}
+function dl(name,text,type='text/csv'){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+
+/* ---------- log screen ---------- */
+let timer,lastE=null;
+const MARK={in:'IN',out:'OUT',att:'✓',err:'?',dup:'='};
+function show(c,head,body,ent){clearTimeout(timer);lastE=ent||null;const r=$('res');r.className='res '+c;
+  r.innerHTML=`<div class="mark" aria-hidden="true">${MARK[c]}</div><h2>${esc(head)}</h2>${body||''}${ent?'<button class="btn" id="undo" type="button">Wrong? Undo</button>':''}`;
+  timer=setTimeout(idle,7000)}
+function idle(){clearTimeout(timer);lastE=null;const r=$('res');r.className='res';
+  r.innerHTML=cur()?`<h2>Ready</h2><p class="hint">${D.mode==='event'?'Logging attendance for':'Logging in / out of'} <b>${esc(cur())}</b></p>`
+    :`<h2>Add ${D.mode==='event'?'an event':'an area'} first</h2><button class="btn" id="addFirst" type="button">+ New ${D.mode}</button>`}
+$('res').onclick=e=>{if(e.target.id==='undo')undo();if(e.target.id==='addFirst')openNew()};
+function undo(){const l=lastE;if(!l)return;const i=D.logs.indexOf(l);if(i<0)return;D.logs.splice(i,1);save();idle();render();$('idIn').focus()}
+const lastFor=(id,place,k)=>{for(let i=D.logs.length-1;i>=0;i--){const l=D.logs[i];if(l.id===id&&l.p===place&&l.k===k)return l}};
+function record(p){
+  const pl=cur(),m=D.mode,now=Date.now(),last=lastFor(p.id,pl,m);
+  const info=t=>`<div class="nm">${esc(p.name)}</div><div class="meta">${esc(pl)} · ${p.guest?'Guest':'ID '+esc(p.id)} · ${hm(t)}</div>`;
+  if(last&&now-last.t<3000){beep(300);return show('dup','Already logged',info(last.t))}
+  let d;
+  if(m==='area')d=last&&last.d==='IN'?'OUT':'IN';
+  else{if(last&&dk(last.t)===dk(now)){beep(300);return show('dup','Already logged today',info(last.t))}d='ATT'}
+  const e={t:now,id:p.id,n:p.name,k:m,p:pl,d};
+  D.logs.push(e);
+  if(!save()){D.logs.pop();beep(200,2);return show('err','Not saved','<p class="meta">The entry could not be saved.</p>')}
+  beep(d==='OUT'?600:880);
+  show(d==='IN'?'in':d==='OUT'?'out':'att',d==='IN'?'Checked in':d==='OUT'?'Checked out':'Attendance logged',info(now)+(p.guest?'<p class="meta">Not in the people list. Logged as typed.</p>':''),e);
+  render();
+}
+const find=q=>{q=q.trim().toLowerCase();return q.length>=2?Object.values(D.people).filter(p=>p.id.toLowerCase().startsWith(q)||p.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,6):[]};
+function handle(raw){
+  const q=String(raw).trim();if(!q)return;
+  if(!cur())return show('err','Nothing selected',`<p class="meta">Add ${D.mode==='event'?'an event':'an area'} first.</p>`);
+  if(q.length<2)return show('err','Too short','<p class="meta">Type at least 2 characters.</p>');
+  const id=norm(q);let p=D.people[id];
+  if(!p){const ex=Object.values(D.people).filter(x=>x.name.toLowerCase()===q.toLowerCase());if(ex.length===1)p=ex[0]}
+  if(!p){if(find(q).length){show('dup','Tap your name','<p class="meta">Tap your name in the list above, or type the full ID.</p>');return false}p={id,name:q,guest:1}}
+  record(p);
+}
+function renderSug(){$('sug').innerHTML=find($('idIn').value).map(p=>`<button type="button" class="sg" data-i="${esc(p.id)}"><b>${esc(p.name)}</b><span>${esc(p.group||'')}${p.group?' · ':''}${esc(p.id)}</span></button>`).join('')}
+$('idIn').addEventListener('input',renderSug);
+$('sug').onclick=e=>{const b=e.target.closest('[data-i]');if(b&&D.people[b.dataset.i]){$('idIn').value='';renderSug();if(!cur())return handle(b.dataset.i);record(D.people[b.dataset.i]);$('idIn').focus()}};
+$('gf').onsubmit=e=>{e.preventDefault();const v=$('idIn').value;if(!v.trim())return;if(handle(v)!==false){$('idIn').value='';renderSug()}};
+document.addEventListener('click',e=>{if(!$('log').hidden&&!e.target.closest('nav,select,button,input,label,dialog,#toast'))$('idIn').focus()});
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{D.mode=b.dataset.m;save();render();idle();$('idIn').focus()});
+$('pl').onchange=()=>{D.sel[D.mode]=$('pl').value;save();render();idle();$('idIn').focus()};
+function openNew(){$('nt').textContent='New '+D.mode;$('nn').value='';$('nd').showModal();$('nn').focus()}
+$('newP').onclick=openNew;$('nc').onclick=()=>$('nd').close();
+function addPlace(kind,name){name=String(name).replace(/\s+/g,' ').trim();if(!name)return null;const L=LIST(kind),old=L.find(x=>x.toLowerCase()===name.toLowerCase());if(old)name=old;else L.push(name);D.sel[kind]=name;save();return name}
+$('nf').onsubmit=e=>{e.preventDefault();addPlace(D.mode,$('nn').value);$('nd').close();render();idle();$('idIn').focus()};
+
+/* camera scanning (optional: QR or barcode; Chrome on Android, needs HTTPS) */
+const cam={s:null,t:0,last:'',seen:0,busy:0};
+function camStop(){clearInterval(cam.t);cam.t=0;if(cam.s)cam.s.getTracks().forEach(t=>t.stop());cam.s=null;cam.last='';$('camW').hidden=true;$('camBtn').textContent='Scan with camera'}
+async function camStart(){try{const det=new BarcodeDetector(),v=$('cam');cam.s=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'}});v.srcObject=cam.s;await v.play();$('camW').hidden=false;$('camBtn').textContent='Stop camera';
+  cam.t=setInterval(async()=>{if(cam.busy||v.readyState<2)return;cam.busy=1;try{const r=await det.detect(v),n=Date.now();if(r[0]&&r[0].rawValue){const c=r[0].rawValue,same=c===cam.last&&n-cam.seen<1500;cam.last=c;cam.seen=n;if(!same)handle(c)}}catch(e){}cam.busy=0},350)
+  }catch(e){camStop();toast('Camera not available. Allow camera access, or type the ID.',null,null,'err')}}
+$('camBtn').onclick=()=>cam.s?camStop():camStart();
+$('camBtn').hidden=!(window.BarcodeDetector&&navigator.mediaDevices&&navigator.mediaDevices.getUserMedia);
+
+function renderLog(){
+  document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('ghost',b.dataset.m!==D.mode));
+  const L=LIST(D.mode);
+  $('pll').textContent=D.mode==='event'?'Event':'Area';$('newP').textContent='+ New '+D.mode;
+  $('pl').innerHTML=L.map(x=>`<option value="${esc(x)}"${x===cur()?' selected':''}>${esc(x)}</option>`).join('')||'<option value="">None yet</option>';
+  if(cur()){
+    if(D.mode==='area')$('cnt').textContent=insideAll().filter(x=>x.p===cur()).length+' inside '+cur();
+    else{const td=dk(Date.now());$('cnt').textContent=new Set(D.logs.filter(l=>l.k==='event'&&l.p===cur()&&dk(l.t)===td).map(l=>l.id)).size+' attended '+cur()+' today'}
+  }else $('cnt').textContent='';
+  $('rec').innerHTML=D.logs.slice(-6).reverse().map(l=>`<li><span>${esc(l.n)} <span class="hint">${esc(l.p)}</span></span><span class="${l.d==='OUT'?'do':'di'}">${LBL[l.d]} · ${hm(l.t)}</span></li>`).join('')||'<li class="hint">No entries yet.</li>';
+}
+
+/* ---------- now: who is inside, who attended today ---------- */
+function insideAll(){const m={};[...D.logs].filter(l=>l.k==='area').sort((a,b)=>a.t-b.t).forEach(l=>m[l.p+'\u0001'+l.id]=l);return Object.values(m).filter(l=>l.d==='IN')}
+function out(list){const now=Date.now();list.forEach(x=>D.logs.push({t:now,id:x.id,n:x.n,k:'area',p:x.p,d:'OUT'}));save()}
+function renderNow(){
+  const g={};insideAll().forEach(x=>(g[x.p]=g[x.p]||[]).push(x));
+  const areas=[...new Set([...D.areas,...Object.keys(g)])];
+  $('nowA').innerHTML=areas.map(n=>{const L=(g[n]||[]).sort((a,b)=>a.n.localeCompare(b.n));
+    return `<h3>${esc(n)} <span class="tag">${L.length}</span> ${L.length?`<button class="link n" data-all="${esc(n)}" type="button">Check all out</button>`:''}</h3><ul class="pl">${L.map(x=>`<li><span>${esc(x.n)} <span class="hint">${esc(x.id)}</span></span><span class="hint">in ${tm(x.t)} <button class="link n" data-p="${esc(x.p)}" data-id="${esc(x.id)}" type="button">Check out</button></span></li>`).join('')||'<li class="hint">Nobody.</li>'}</ul>`}).join('')||'<p class="hint">No areas yet. Add one on the Log tab.</p>';
+  const td=dk(Date.now()),e={};D.logs.filter(l=>l.k==='event'&&dk(l.t)===td).forEach(l=>(e[l.p]=e[l.p]||{})[l.id]=l);
+  const evs=[...new Set([...D.events,...Object.keys(e)])];
+  $('nowE').innerHTML=evs.map(n=>{const L=Object.values(e[n]||{}).sort((a,b)=>a.n.localeCompare(b.n));
+    return `<details><summary>${esc(n)}&nbsp;<span class="tag">${L.length}</span></summary><ul class="pl">${L.map(x=>`<li><span>${esc(x.n)} <span class="hint">${esc(x.id)}</span></span><span class="hint">${hm(x.t)}</span></li>`).join('')||'<li class="hint">Nobody yet.</li>'}</ul></details>`}).join('')||'<p class="hint">No events yet. Add one on the Log tab.</p>';
+}
+$('nowA').onclick=async e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.all){const L=insideAll().filter(x=>x.p===b.dataset.all);if(!L.length||!await ask('Check everyone out?',`${L.length} people are still marked inside ${b.dataset.all}.`,'Check everyone out',true))return;out(L);render()}
+  else if(b.dataset.id){const x=insideAll().find(x=>x.p===b.dataset.p&&x.id===b.dataset.id);if(x){out([x]);render()}}};
+
+/* ---------- records ---------- */
+$('rd').value=dk(Date.now());
+const csvCell=v=>{v=String(v??'');if(/^[=+\-@]/.test(v))v="'"+v;return'"'+v.replace(/"/g,'""')+'"'};
+const toCSV=rows=>rows.map(r=>r.map(csvCell).join(',')).join('\n');
+const recRows=()=>{const d=$('rd').value,q=$('rq').value.trim().toLowerCase(),p=$('rp').value;return D.logs.filter(l=>(!d||dk(l.t)===d)&&(!p||l.k+'|'+l.p===p)&&(!q||l.id.toLowerCase().includes(q)||l.n.toLowerCase().includes(q))).sort((a,b)=>b.t-a.t)};
+let shown=[];
+function renderRecs(){
+  const keep=$('rp').value,seen=new Set(),opts=[];
+  [...D.events.map(p=>['event',p]),...D.areas.map(p=>['area',p]),...D.logs.map(l=>[l.k,l.p])].forEach(([k,p])=>{const v=k+'|'+p;if(!seen.has(v)){seen.add(v);opts.push(`<option value="${esc(v)}">${KIND[k]}: ${esc(p)}</option>`)}});
+  $('rp').innerHTML='<option value="">All</option>'+opts.join('');$('rp').value=seen.has(keep)?keep:'';
+  const all=recRows(),hd=!$('rd').value;shown=all.slice(0,400);
+  $('rh').innerHTML='<tr>'+(hd?'<th>Date</th>':'')+'<th>Time</th><th>Name</th><th>ID</th><th>Event / area</th><th>Action</th><th></th></tr>';
+  $('rb').innerHTML=shown.map((l,i)=>`<tr>${hd?'<td>'+dk(l.t)+'</td>':''}<td>${hm(l.t)}</td><td>${esc(l.n)}</td><td>${esc(l.id)}</td><td>${KIND[l.k]}: ${esc(l.p)}</td><td class="${l.d==='OUT'?'do':'di'}">${LBL[l.d]}</td><td><button class="link" data-i="${i}" type="button">Delete</button></td></tr>`).join('');
+  $('rsum').textContent=all.length?`${all.length} entries · ${new Set(all.map(l=>l.id)).size} people`+(all.length>400?'. Showing the latest 400; download the CSV for all.':''):'No entries match.';
+}
+['rd','rq','rp'].forEach(i=>$(i).oninput=renderRecs);
+$('rb').onclick=async e=>{const b=e.target.closest('[data-i]');if(!b)return;const l=shown[+b.dataset.i];if(!l||!await ask('Delete this entry?',`${l.n} · ${KIND[l.k]}: ${l.p} · ${LBL[l.d]} at ${tm(l.t)}`,'Delete',true))return;const i=D.logs.indexOf(l);if(i>=0){D.logs.splice(i,1);save()}render()};
+$('rcsv').onclick=()=>dl('doorly-records-'+($('rd').value||'all')+'.csv',toCSV([['date','time','id','name','type','place','action'],...recRows().map(l=>[dk(l.t),h24(l.t),l.id,l.n,KIND[l.k],l.p,LBL[l.d]])]));
+
+/* ---------- setup ---------- */
+function renderSetup(){
+  ['event','area'].forEach(k=>{const el=$(k==='event'?'evL':'arL');el.innerHTML=LIST(k).map((x,i)=>`<li><span>${esc(x)}</span><button class="link" data-rm="${k}" data-i="${i}" type="button">Remove</button></li>`).join('')||'<li class="hint">None yet.</li>'});
+  $('pc').textContent=Object.keys(D.people).length;
+  const q=$('ps').value.trim().toLowerCase();
+  $('pb').innerHTML=Object.values(D.people).filter(p=>!q||p.id.toLowerCase().includes(q)||p.name.toLowerCase().includes(q)).sort((a,b)=>a.name.localeCompare(b.name)).slice(0,100).map(p=>`<tr><td>${esc(p.id)}</td><td>${esc(p.name)}</td><td>${esc(p.group||'')}</td><td><button class="link" data-pid="${esc(p.id)}" type="button">Delete</button></td></tr>`).join('');
+}
+$('setup').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.rm){LIST(b.dataset.rm).splice(+b.dataset.i,1);fixSel();save();render()}
+  else if(b.dataset.pid){delete D.people[b.dataset.pid];save();render()}};
+$('evF').onsubmit=e=>{e.preventDefault();addPlace('event',$('evN').value);$('evN').value='';render()};
+$('arF').onsubmit=e=>{e.preventDefault();addPlace('area',$('arN').value);$('arN').value='';render()};
+function theme(){document.documentElement.style.setProperty('--ac',D.accent);$('appn').textContent=D.app;document.title=D.app;const m=document.querySelector('meta[name=theme-color]');if(m)m.content=D.accent}
+$('sa').value=D.app;$('sc').value=D.accent;
+$('sa').oninput=()=>{D.app=$('sa').value.trim()||'Doorly';save();theme()};
+$('sc').oninput=()=>{D.accent=$('sc').value;save();theme()};
+$('ps').oninput=renderSetup;
+
+/* people */
+const putPerson=(id,name,group)=>{id=norm(id||'');name=String(name||'').replace(/\s+/g,' ').trim();if(!id||!name)return null;return{id,name,group:String(group||'').replace(/\s+/g,' ').trim()}};
+$('pf').onsubmit=async e=>{e.preventDefault();const p=putPerson($('pi').value,$('pn').value,$('pg').value);if(!p)return;
+  if(D.people[p.id]&&D.people[p.id].name!==p.name&&!await ask('Replace this person?',`ID ${p.id} already belongs to ${D.people[p.id].name}.`,'Replace',true))return;
+  D.people[p.id]=p;save();e.target.reset();$('pi').focus();render();toast('Saved '+p.name)};
+function parseCSV(t){const l1=t.split(/\r?\n/,1)[0],sep=(l1.match(/;/g)||[]).length>(l1.match(/,/g)||[]).length?';':',';const rows=[];let r=[],c='',q=false;
+  for(let i=0;i<t.length;i++){const ch=t[i];
+    if(q){if(ch==='"'&&t[i+1]==='"'){c+='"';i++}else if(ch==='"')q=false;else c+=ch}
+    else if(ch==='"')q=true;else if(ch===sep){r.push(c);c=''}
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;r.push(c);rows.push(r);r=[];c=''}else c+=ch}
+  if(c||r.length){r.push(c);rows.push(r)}return rows.filter(r=>r.some(x=>x.trim()))}
+$('csv').onchange=async e=>{const f=e.target.files[0];if(!f)return;const rows=parseCSV((await f.text()).replace(/^\uFEFF/,''));if(!rows.length)return;
+  const h=rows[0].map(x=>x.trim().toLowerCase()),hd=h.includes('id'),col=k=>hd?h.indexOf(k):['id','name','group'].indexOf(k);
+  let n=0,bad=0;rows.slice(hd?1:0).forEach(r=>{const p=putPerson(r[col('id')],r[col('name')],col('group')<0?'':r[col('group')]);if(p){D.people[p.id]=p;n++}else bad++});
+  save();render();$('im').textContent=`Imported ${n} people.`+(bad?` Skipped ${bad} rows with no ID or name.`:'');e.target.value=''};
+
+/* backup, restore, merge, erase */
+const okL=l=>l&&typeof l.id==='string'&&typeof l.n==='string'&&typeof l.p==='string'&&Number.isFinite(l.t)&&(l.k==='event'||l.k==='area')&&(l.d==='IN'||l.d==='OUT'||l.d==='ATT');
+const cleanL=l=>({t:l.t,id:l.id,n:l.n,k:l.k,p:l.p,d:l.d});
+async function readBackup(f){try{const o=JSON.parse(await f.text());if(!o||!Array.isArray(o.logs))throw 0;return o}catch(e){toast('That file is not a Doorly backup.',null,null,'err');return null}}
+const strs=a=>(Array.isArray(a)?a:[]).filter(x=>typeof x==='string'&&x.trim()).map(x=>x.trim());
+$('bk').onclick=()=>dl('doorly-backup-'+dk(Date.now())+'.json',JSON.stringify({doorly:2,app:D.app,accent:D.accent,events:D.events,areas:D.areas,people:D.people,logs:D.logs}),'application/json');
+$('rs').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const o=await readBackup(f);if(!o)return;
+  if(!await ask('Replace everything?',`This replaces all entries, people, events and areas on this device with the backup (${o.logs.length} entries).`,'Replace',true))return;
+  D.events=strs(o.events);D.areas=strs(o.areas);D.people={};Object.values(o.people||{}).forEach(p=>{const q=p&&putPerson(p.id,p.name,p.group);if(q)D.people[q.id]=q});
+  D.logs=o.logs.filter(okL).map(cleanL).sort((a,b)=>a.t-b.t);if(typeof o.app==='string'&&o.app)D.app=o.app;if(/^#[0-9a-f]{6}$/i.test(o.accent||''))D.accent=o.accent;
+  fixSel();save();$('sa').value=D.app;$('sc').value=D.accent;theme();render();idle();toast('Backup restored.')};
+$('mgf').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const o=await readBackup(f);if(!o)return;
+  const key=l=>[l.t,l.id,l.k,l.p,l.d].join('\u0001'),have=new Set(D.logs.map(key));let n=0;
+  o.logs.filter(okL).map(cleanL).forEach(l=>{if(!have.has(key(l))){have.add(key(l));D.logs.push(l);n++}});
+  D.logs.sort((a,b)=>a.t-b.t);strs(o.events).forEach(x=>{if(!D.events.some(y=>y.toLowerCase()===x.toLowerCase()))D.events.push(x)});strs(o.areas).forEach(x=>{if(!D.areas.some(y=>y.toLowerCase()===x.toLowerCase()))D.areas.push(x)});
+  Object.values(o.people||{}).forEach(p=>{const q=p&&putPerson(p.id,p.name,p.group);if(q&&!D.people[q.id])D.people[q.id]=q});
+  fixSel();save();render();toast(`Added ${n} new entries.`)};
+$('wipe').onclick=async()=>{if(!await ask('Erase everything?','All entries and people on this device will be deleted. Events and areas are kept. Download a backup first if unsure.','Erase',true))return;D.logs=[];D.people={};save();render();idle();toast('All entries and people erased.')};
+
+/* ---------- tabs ---------- */
+let tab='log';
+function go(t){tab=t;document.querySelectorAll('[data-tab]').forEach(x=>x.hidden=x.id!==t);
+  document.querySelectorAll('nav button').forEach(b=>{const on=b.dataset.t===t;b.setAttribute('aria-selected',on)});
+  if(t!=='log')camStop();render();if(t==='log'){idle();$('idIn').focus()}}
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
+function render(){renderLog();if(tab==='now')renderNow();else if(tab==='recs')renderRecs();else if(tab==='setup')renderSetup()}
+
+/* ---------- start ---------- */
+theme();render();idle();
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
+if('serviceWorker' in navigator&&(location.protocol==='https:'||location.hostname==='localhost'))navigator.serviceWorker.register('sw.js').catch(()=>{});
+if('serviceWorker' in navigator){let had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had)toast('A new version is ready.','Reload',()=>location.reload(),null,20000);had=true})}
+let wl;const wake=async()=>{try{if(!document.hidden&&tab==='log'&&navigator.wakeLock&&!(wl&&!wl.released))wl=await navigator.wakeLock.request('screen')}catch(e){}};
+document.addEventListener('visibilitychange',wake);document.addEventListener('click',wake);
+let ip;addEventListener('beforeinstallprompt',e=>{e.preventDefault();ip=e;$('inst').hidden=false});
+$('inst').onclick=async()=>{if(!ip)return;ip.prompt();await ip.userChoice.catch(()=>{});ip=null;$('inst').hidden=true};
+</script>
+</body>
+</html>
